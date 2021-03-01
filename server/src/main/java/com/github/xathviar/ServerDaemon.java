@@ -1,7 +1,11 @@
 package com.github.xathviar;
 
+import com.badlogic.ashley.core.Engine;
 import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.common.util.concurrent.AbstractScheduledService;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.lwjgl.Sys;
 import org.openmuc.jositransport.ServerTSap;
 import org.openmuc.jositransport.TConnection;
 import org.openmuc.jositransport.TConnectionListener;
@@ -10,10 +14,14 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
-public class ServerDaemon extends AbstractIdleService implements TConnectionListener {
+@Data
+public class ServerDaemon extends AbstractScheduledService implements TConnectionListener {
     private ServerTSap serverTSap;
+    private Engine engine;
+    private long lastUpdatetime;
     private List<ServerConnectionHandler> serverConnectionHandlers;
 
     @Override
@@ -21,11 +29,29 @@ public class ServerDaemon extends AbstractIdleService implements TConnectionList
         serverTSap = new ServerTSap(5555, this);
         serverTSap.startListening();
         serverConnectionHandlers = new ArrayList<>();
+        lastUpdatetime = -1;
+        engine = new Engine();
     }
 
     @Override
     protected void shutDown() throws Exception {
         serverTSap.stopListening();
+    }
+
+    @Override
+    protected Scheduler scheduler() {
+        return Scheduler.newFixedRateSchedule(0L, 500L, TimeUnit.MILLISECONDS);
+    }
+
+    @Override
+    protected void runOneIteration() throws Exception {
+        if (lastUpdatetime < 0) {
+            lastUpdatetime = System.nanoTime();
+        }
+        long currentUpdateTime = System.nanoTime();
+        //TODO Watch out for the nano Seconds!
+        engine.update(currentUpdateTime - lastUpdatetime);
+        lastUpdatetime = currentUpdateTime;
     }
 
 

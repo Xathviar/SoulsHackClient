@@ -32,7 +32,7 @@ public class SessionSingleton {
     public String createClientConnectionActor (String userName) {
         String uuid = CoreUtils.generateUUIDFromName(userName);
         NamedActor namedActor = new ClientConnectionActor(uuid);
-        actorMap.put(namedActor.getName(), namedActor);
+        actorMap.put(namedActor.getUuid(), namedActor);
         return uuid;
     }
 }

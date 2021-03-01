@@ -4,7 +4,6 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.Screen;
-import com.github.xathviar.Connections.ClientConnection;
 import com.github.xathviar.CoreUtils;
 import com.github.xathviar.ServerDaemon;
 import com.github.xathviar.SessionSingleton;
@@ -13,8 +12,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.openmuc.jositransport.ClientTSap;
 import org.openmuc.jositransport.TConnection;
 
-import java.io.IOException;
-import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.util.HashMap;

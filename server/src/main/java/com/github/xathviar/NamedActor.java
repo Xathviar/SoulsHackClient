@@ -1,14 +1,14 @@
 package com.github.xathviar;
 
 public abstract class NamedActor implements Actor {
-    private String name;
+    private String uuid;
 
-    public NamedActor(String name) {
-        this.name = name;
+    public NamedActor(String uuid) {
+        this.uuid = uuid;
     }
 
-    public String getName() {
-        return name;
+    public String getUuid() {
+        return uuid;
     }
 
 }

@@ -1,5 +1,9 @@
 package com.github.xathviar;
 
+import com.badlogic.ashley.core.Entity;
+import com.github.xathviar.EntitySystem.Components.CharacterComponent;
+import com.github.xathviar.EntitySystem.Components.PositionComponent;
+import com.github.xathviar.EntitySystem.Components.VelocityComponent;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.openmuc.jositransport.TConnection;
@@ -55,6 +59,11 @@ public class ServerConnectionHandler extends Thread implements Runnable {
                 log.info("Client connected!");
                 ((ClientConnectionActor) actor).setServerConnectionHandler(this);
                 this.uuid = uuid;
+                Entity playerEntity = new Entity();
+                playerEntity.add(new PositionComponent());
+                playerEntity.add(new VelocityComponent());
+                playerEntity.add(new CharacterComponent(uuid));
+                messageHandler.getEngine().addEntity(playerEntity);
             } else {
                 log.warn("Invalid Actor detected");
                 throw new Exception("Invalid Actor detected");
