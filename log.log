@@ -1,0 +1,4 @@
+2021-03-01T22:17:28.847+0100 [LWJGL Application] [DEBUG] CoreUtils - Sending 265641eb-ff50-3173-8fb0-4758cc4a350b
+2021-03-01T22:17:28.848+0100 [LWJGL Application] [DEBUG] CoreUtils - Sending 265641eb-ff50-3173-8fb0-4758cc4a350b
+2021-03-01T22:17:28.849+0100 [pool-2-thread-1] [INFO] ServerConnectionHandler - Client connected!
+2021-03-01T22:17:28.849+0100 [Thread-5] [INFO] ServerConnectionHandler - Started ServerConnectionHandler!
