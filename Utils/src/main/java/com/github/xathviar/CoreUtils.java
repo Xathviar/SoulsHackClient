@@ -18,25 +18,38 @@ public class CoreUtils {
         return UUID.nameUUIDFromBytes((name1 + ":" + name2).getBytes()).toString();
     }
 
-    public static void send(TConnection tConnection, byte[] array) throws Exception {
+    private static void send(TConnection tConnection, byte[] array) throws Exception {
         synchronized (tConnection) {
             log.debug("Sending " + new String(array));
             tConnection.send(array, 0, array.length);
         }
     }
 
-    public static void send(TConnection tConnection, String string) throws Exception {
+    private static void send(TConnection tConnection, String string) throws Exception {
         send(tConnection, string.getBytes(StandardCharsets.UTF_8));
     }
 
-    public static String receive(TConnection tConnection) throws Exception {
+    public static void sendWithLength(TConnection tConnection, String string) throws Exception {
+        byte[] buffer = string.getBytes(StandardCharsets.UTF_8);
+        send(tConnection, Integer.toString(buffer.length));
+        send(tConnection, buffer);
+    }
+
+
+    private static String receive(TConnection tConnection, int bufferSize) throws Exception {
         synchronized (tConnection) {
-            ByteBuffer byteBuffer = ByteBuffer.allocate(8192);
+            ByteBuffer byteBuffer = ByteBuffer.allocate(bufferSize);
             tConnection.receive(byteBuffer);
             String receive = StandardCharsets.UTF_8.decode(byteBuffer).toString();
             log.debug("Received " + receive);
             return receive;
         }
+    }
+
+
+    public static String receiveWithLength(TConnection tConnection) throws Exception {
+        int bufferSize = Integer.parseInt(receive(tConnection, 20));
+        return receive(tConnection, bufferSize);
     }
 
 }

@@ -5,7 +5,6 @@ import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Preferences;
 import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -21,7 +20,6 @@ public class SoulsHackMainClass extends Game implements ApplicationListener {
     private SelectCharacterScreen selectCharacterScreen;
     SpriteBatch batch;
     private BitmapFont font;
-    Texture img;
     private static GlyphLayout glyphLayout = new GlyphLayout();
     private float fontHeight;
     private Preferences prefs;
@@ -30,7 +28,6 @@ public class SoulsHackMainClass extends Game implements ApplicationListener {
     @Override
     public void create() {
         batch = new SpriteBatch();
-        img = new Texture("badlogic.jpg");
         try {
             font = GdfBitmapFont.create((x) -> Gdx.files.internal(x), "medium.gdfa.gz");
         } catch (IOException e) {

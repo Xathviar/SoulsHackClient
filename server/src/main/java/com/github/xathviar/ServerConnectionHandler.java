@@ -30,7 +30,7 @@ public class ServerConnectionHandler extends Thread implements Runnable {
         while (started) {
             try {
                 if (messageHandler != null) {
-                    messageHandler.handleMessage(CoreUtils.receive(tConnection), this);
+                    messageHandler.handleMessage(CoreUtils.receiveWithLength(tConnection), this);
                 }
             } catch (InterruptedException e) {
                 started = false;
@@ -50,9 +50,7 @@ public class ServerConnectionHandler extends Thread implements Runnable {
     }
 
     public void handleLogin() throws Exception {
-        ByteBuffer byteBuffer = ByteBuffer.allocate(8192);
-        tConnection.receive(byteBuffer);
-        String uuid = StandardCharsets.UTF_8.decode(byteBuffer).toString();
+        String uuid = CoreUtils.receiveWithLength(tConnection);
         if (SessionSingleton.getInstance().containsActor(uuid)) {
             NamedActor actor = SessionSingleton.getInstance().getActor(uuid);
             if (actor instanceof ClientConnectionActor) {

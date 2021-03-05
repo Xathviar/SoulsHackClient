@@ -1,6 +1,7 @@
 package com.github.xathviar;
 
 import com.badlogic.ashley.core.Engine;
+import com.github.xathviar.SoulsHackCore.WorldGenerator;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import lombok.Data;
@@ -10,6 +11,7 @@ import org.openmuc.jositransport.ServerTSap;
 import org.openmuc.jositransport.TConnection;
 import org.openmuc.jositransport.TConnectionListener;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -60,8 +62,8 @@ public class ServerDaemon extends AbstractScheduledService implements TConnectio
         ServerConnectionHandler connectionHandler = new ServerConnectionHandler();
         connectionHandler.settConnection(tConnection);
         try {
-            connectionHandler.handleLogin();
             connectionHandler.setMessageHandler(this);
+            connectionHandler.handleLogin();
             connectionHandler.start();
             serverConnectionHandlers.add(connectionHandler);
         } catch (Exception e) {
@@ -98,7 +100,7 @@ public class ServerDaemon extends AbstractScheduledService implements TConnectio
                 serverConnectionHandlers.remove(source);
                 source.close();
             } catch (Exception e) {
-                log.error(e.toString());
+                log.error(e.toString(), e);
             }
         }
     }

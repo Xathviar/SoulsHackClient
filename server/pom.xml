@@ -11,6 +11,12 @@
 
     <groupId>com.github.xathviar.soulsHackClient</groupId>
     <artifactId>server</artifactId>
+    <repositories>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
+    </repositories>
     <dependencies>
         <dependency>
             <groupId>org.openmuc</groupId>
@@ -22,6 +28,11 @@
             <groupId>com.github.xathviar.soulsHackClient</groupId>
             <artifactId>Utils</artifactId>
             <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.Xathviar.SoulsHackCore</groupId>
+            <artifactId>MapGen</artifactId>
+            <version>v1.5</version>
         </dependency>
     </dependencies>
 

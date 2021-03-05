@@ -32,7 +32,8 @@ public class GameScreen implements Screen, InputProcessor {
         try {
             Thread.sleep(5000);
             tConnection = clientTSap.connectTo(InetAddress.getLoopbackAddress(), 5555);
-            CoreUtils.send(tConnection, uuid);
+            CoreUtils.sendWithLength(tConnection, uuid);
+            CoreUtils.sendWithLength(tConnection, "map");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -75,7 +76,7 @@ public class GameScreen implements Screen, InputProcessor {
     @Override
     public void dispose() {
         try {
-            CoreUtils.send(tConnection, "quit");
+            CoreUtils.sendWithLength(tConnection, "quit");
             Thread.sleep(5000);
         } catch (Exception e) {
             e.printStackTrace();
@@ -87,10 +88,10 @@ public class GameScreen implements Screen, InputProcessor {
     public boolean keyDown(int keycode) {
         try {
             if (Input.Keys.Q == keycode) {
-                CoreUtils.send(tConnection, "quit");
+                CoreUtils.sendWithLength(tConnection, "quit");
             } else {
-                CoreUtils.send(tConnection, "key");
-                CoreUtils.send(tConnection, Integer.toString(keycode));
+                CoreUtils.sendWithLength(tConnection, "key");
+                CoreUtils.sendWithLength(tConnection, Integer.toString(keycode));
             }
         } catch (SocketException e) {
             log.error("Server stopped responding");
