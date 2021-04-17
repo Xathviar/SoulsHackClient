@@ -95,7 +95,7 @@ public class ServerDaemon extends AbstractScheduledService implements TConnectio
                 MessageHandler messageHandler = MessageHandler.valueOf(message.toUpperCase(Locale.ROOT));
                 messageHandler.handleMessage(source);
             } catch (IllegalArgumentException e) {
-                log.error("Message - " + message + " - has no Handler");
+                log.error("Message - " + message + " - has no Handler", e);
                 SessionSingleton.getInstance().deleteActor(source.getUuid());
                 serverConnectionHandlers.remove(source);
                 source.close();

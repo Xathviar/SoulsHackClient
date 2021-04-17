@@ -15,6 +15,7 @@ public enum MessageHandler {
         @Override
         public void handleMessage(ServerConnectionHandler source) throws Exception {
             String message = MapHelper.getWorldFromSeed(MapSingleton.getInstance().getSeed());
+            CoreUtils.sendWithLength(source.gettConnection(), "map");
             CoreUtils.sendWithLength(source.gettConnection(), message);
             log.info("Sending Map with Seed (" + MapSingleton.getInstance().getSeed() + ")");
         }

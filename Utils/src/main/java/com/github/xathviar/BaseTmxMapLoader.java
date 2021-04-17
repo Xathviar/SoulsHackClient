@@ -435,7 +435,9 @@ public abstract class BaseTmxMapLoader<P extends BaseTmxMapLoader.Parameters> ex
         if (encoding.equals("csv")) {
             String[] array = data.getText().split(",");
             for (int i = 0; i < array.length; i++)
-                ids[i] = (int)Long.parseLong(array[i].trim());
+                try {
+                    ids[i] = (int)Long.parseLong(array[i].trim());
+                } catch (NumberFormatException ignored) {}
         } else {
             if (true)
                 if (encoding.equals("base64")) {
