@@ -1,4 +1,4 @@
-package com.github.xathviar.Screen;
+package com.github.xathviar.Components;
 
 import com.badlogic.gdx.Input;
 import com.github.xathviar.Components.SceneComponent;

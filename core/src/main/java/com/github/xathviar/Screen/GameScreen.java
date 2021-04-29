@@ -8,8 +8,11 @@ import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.maps.MapLayers;
 import com.badlogic.gdx.maps.MapProperties;
 import com.badlogic.gdx.maps.tiled.TiledMap;
+import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
+import com.badlogic.gdx.maps.tiled.TmxMapLoader;
 import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
@@ -42,18 +45,20 @@ public class GameScreen implements Screen, InputProcessor, Runnable {
     private Stage stage;
     private SpriteBatch batch;
     private boolean doCreate = false;
+    private TiledMapTileLayer wall;
+    private TiledMapTileLayer floor;
+    private boolean doRun = true;
 
 
     public GameScreen(SoulsHackMainClass mainClass, HashMap<String, String> parameters) {
         this.mainClass = mainClass;
         this.uuid = SessionSingleton.getInstance().createClientConnectionActor(parameters.get("Playername"));
-        ServerDaemon serverDaemon = new ServerDaemon();
-        serverDaemon.startAsync();
         clientTSap = new ClientTSap();
         try {
             receiveConnection = new Thread(this);
             receiveConnection.setDaemon(true);
-            Thread.sleep(5000);
+            receiveConnection.setName("Client Connection Reciever");
+//            Thread.sleep(5000);
             tConnection = clientTSap.connectTo(InetAddress.getLoopbackAddress(), 5555);
             CoreUtils.sendWithLength(tConnection, uuid);
             CoreUtils.sendWithLength(tConnection, "map");
@@ -74,17 +79,19 @@ public class GameScreen implements Screen, InputProcessor, Runnable {
 
         map = manager.get("tempmap.tmx", TiledMap.class);
         MapProperties properties = map.getProperties();
-        tileWidth         = properties.get("tilewidth", Integer.class);
-        tileHeight        = properties.get("tileheight", Integer.class);
-        mapWidthInTiles   = properties.get("width", Integer.class);
-        mapHeightInTiles  = properties.get("height", Integer.class);
-        mapWidthInPixels  = mapWidthInTiles  * tileWidth;
+        tileWidth = properties.get("tilewidth", Integer.class);
+        tileHeight = properties.get("tileheight", Integer.class);
+        mapWidthInTiles = properties.get("width", Integer.class);
+        mapHeightInTiles = properties.get("height", Integer.class);
+        mapWidthInPixels = mapWidthInTiles * tileWidth;
         mapHeightInPixels = mapHeightInTiles * tileHeight;
-        camera = new OrthographicCamera(320.f, 180.f);
+        camera = new OrthographicCamera(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         camera.position.x = mapWidthInPixels * .5f;
         camera.position.y = mapHeightInPixels * .35f;
         renderer = new OrthogonalTiledMapRenderer(map);
-
+        MapLayers mapLayer = map.getLayers();
+        floor = (TiledMapTileLayer) mapLayer.get("Floor");
+        wall = (TiledMapTileLayer) mapLayer.get("Walls");
     }
 
     public GameScreen() {
@@ -105,15 +112,24 @@ public class GameScreen implements Screen, InputProcessor, Runnable {
         }
         if (doCreate) {
             doCreate = false;
-            create();
+//            create();
+            return;
         }
         camera.update();
         renderer.setView(camera);
-        renderer.render();
+        renderer.getBatch().begin();
+        renderer.renderTileLayer(floor);
+        renderer.renderTileLayer(wall);
+        renderer.getBatch().end();
     }
 
     @Override
     public void resize(int width, int height) {
+        if (camera != null) {
+            camera.setToOrtho(true, width, height);
+            stage.getViewport().update(width, height, false);
+            batch.getProjectionMatrix().setToOrtho2D(0, 0, width, height);
+        }
 
     }
 
@@ -149,27 +165,27 @@ public class GameScreen implements Screen, InputProcessor, Runnable {
         try {
             if (Input.Keys.Q == keycode) {
                 CoreUtils.sendWithLength(tConnection, "quit");
+                doRun = false;
+                Gdx.app.exit();
             } else {
                 CoreUtils.sendWithLength(tConnection, "key");
                 CoreUtils.sendWithLength(tConnection, Integer.toString(keycode));
             }
+            return true;
         } catch (SocketException e) {
             log.error("Server stopped responding");
             Gdx.app.exit();
         } catch (Exception e) {
             e.printStackTrace();
         }
-        System.out.println("KeyDown " + keycode);
-
         return false;
     }
 
     @Override
     public void run() {
-        while (true) {
+        while (doRun) {
             try {
-                String s = CoreUtils.receiveWithLength(tConnection);
-                log.info("asdf: " + s);
+                String s = CoreUtils.receiveWithLength(this, tConnection);
                 ClientMessageHandler messageHandler = ClientMessageHandler.valueOf(s.toUpperCase(Locale.ROOT));
                 messageHandler.handleMessage(this);
             } catch (Exception e) {

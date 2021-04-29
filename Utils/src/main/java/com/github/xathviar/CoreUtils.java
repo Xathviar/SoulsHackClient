@@ -36,8 +36,8 @@ public class CoreUtils {
     }
 
 
-    private static String receive(TConnection tConnection, int bufferSize) throws Exception {
-        synchronized (tConnection) {
+    private static String receive(Object sync, TConnection tConnection, int bufferSize) throws Exception {
+        synchronized (sync) {
             ByteBuffer byteBuffer = ByteBuffer.allocate(bufferSize);
             tConnection.receive(byteBuffer);
             String receive = StandardCharsets.UTF_8.decode(byteBuffer).toString();
@@ -47,9 +47,9 @@ public class CoreUtils {
     }
 
 
-    public static String receiveWithLength(TConnection tConnection) throws Exception {
-        int bufferSize = Integer.parseInt(receive(tConnection, 20));
-        return receive(tConnection, bufferSize);
+    public static String receiveWithLength(Object sync, TConnection tConnection) throws Exception {
+        int bufferSize = Integer.parseInt(receive(sync, tConnection, 20));
+        return receive(sync, tConnection, bufferSize);
     }
 
 }

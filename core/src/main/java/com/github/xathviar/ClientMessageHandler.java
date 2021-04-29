@@ -9,7 +9,7 @@ public enum ClientMessageHandler {
     MAP {
         @Override
         public void handleMessage(GameScreen source) throws Exception {
-            String map = CoreUtils.receiveWithLength(source.getTConnection());
+            String map = CoreUtils.receiveWithLength(this, source.getTConnection());
             FileWriter writer = new FileWriter("core/assets/tempmap.tmx");
             IOUtils.write(map, writer);
             writer.flush();

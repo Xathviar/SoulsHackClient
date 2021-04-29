@@ -58,7 +58,8 @@ public class ConnectScreen implements Screen, InputProcessor {
 
     @Override
     public void resize(int i, int i1) {
-
+        stage.getViewport().update(i, i1, false);
+        batch.getProjectionMatrix().setToOrtho2D(0, 0, i, i1);
     }
 
     @Override

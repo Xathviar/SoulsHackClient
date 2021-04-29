@@ -1,18 +1,14 @@
 package com.github.xathviar;
 
 import com.badlogic.ashley.core.Engine;
-import com.github.xathviar.SoulsHackCore.WorldGenerator;
-import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.lwjgl.Sys;
 import org.openmuc.jositransport.ServerTSap;
 import org.openmuc.jositransport.TConnection;
 import org.openmuc.jositransport.TConnectionListener;
 
-import java.io.File;
-import java.io.IOException;
+ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;

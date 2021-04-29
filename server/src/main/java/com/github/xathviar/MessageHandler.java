@@ -7,7 +7,7 @@ public enum MessageHandler {
     KEY {
         @Override
         public void handleMessage(ServerConnectionHandler source) throws Exception {
-            String key = CoreUtils.receiveWithLength(source.gettConnection());
+            String key = CoreUtils.receiveWithLength(this, source.gettConnection());
             log.info("Received Key=" + key);
         }
     },
@@ -18,6 +18,12 @@ public enum MessageHandler {
             CoreUtils.sendWithLength(source.gettConnection(), "map");
             CoreUtils.sendWithLength(source.gettConnection(), message);
             log.info("Sending Map with Seed (" + MapSingleton.getInstance().getSeed() + ")");
+        }
+    },
+    QUIT {
+        @Override
+        public void handleMessage(ServerConnectionHandler source) throws Exception {
+            source.close();
         }
     };
 
