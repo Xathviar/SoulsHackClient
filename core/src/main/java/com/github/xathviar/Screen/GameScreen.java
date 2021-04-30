@@ -5,6 +5,7 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.assets.AssetManager;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -13,7 +14,6 @@ import com.badlogic.gdx.maps.MapProperties;
 import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
-import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
 import com.github.xathviar.*;
@@ -88,6 +88,8 @@ public class GameScreen implements Screen, InputProcessor, Runnable {
         camera = new OrthographicCamera(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
         camera.position.x = mapWidthInPixels * .5f;
         camera.position.y = mapHeightInPixels * .35f;
+//        camera.position.x = 0;
+//        camera.position.y = 0;
         renderer = new OrthogonalTiledMapRenderer(map);
         MapLayers mapLayer = map.getLayers();
         floor = (TiledMapTileLayer) mapLayer.get("Floor");
@@ -105,14 +107,14 @@ public class GameScreen implements Screen, InputProcessor, Runnable {
 
     @Override
     public void render(float delta) {
-        Gdx.gl.glClearColor(.5f, .7f, .9f, 1);
+        Gdx.gl.glClearColor(1f, 1f, 1f, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         if (camera == null && !doCreate) {
             return;
         }
         if (doCreate) {
             doCreate = false;
-//            create();
+            create();
             return;
         }
         camera.update();
