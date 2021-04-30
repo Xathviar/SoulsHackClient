@@ -32,7 +32,7 @@
         <dependency>
             <groupId>com.github.Xathviar.SoulsHackCore</groupId>
             <artifactId>MapGen</artifactId>
-            <version>v1.8</version>
+            <version>v3.0</version>
         </dependency>
     </dependencies>
 
