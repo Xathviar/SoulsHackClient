@@ -1,10 +1,13 @@
 package com.github.xathviar;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ArrayUtils;
 import org.openmuc.jositransport.TConnection;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -21,7 +24,33 @@ public class CoreUtils {
     private static void send(TConnection tConnection, byte[] array) throws Exception {
         synchronized (tConnection) {
             log.debug("Sending " + new String(array));
+            int maxBuffer = 60000;
+            if (array.length > maxBuffer) {
+                List<byte[]> byteList = new ArrayList<>();
+                for (int i = 0; i < array.length; i += maxBuffer) {
+                    if (array.length - i > maxBuffer) {
+                        byteList.add(ArrayUtils.subarray(array, i, i + maxBuffer));
+                    } else {
+                        byteList.add(ArrayUtils.subarray(array, i, array.length));
+                    }
+                }
+                send(tConnection, byteList);
+                return;
+            }
             tConnection.send(array, 0, array.length);
+        }
+    }
+
+    private static void send(TConnection tConnection, List<byte[]> array) throws Exception {
+        synchronized (tConnection) {
+            log.debug("Sending " + new String(array.toString()));
+            List<Integer> offsets = new ArrayList<>();
+            List<Integer> lengths = new ArrayList<>();
+            for (byte[] bytes : array) {
+                offsets.add(0);
+                lengths.add(bytes.length);
+            }
+            tConnection.send(array, offsets, lengths);
         }
     }
 
@@ -49,7 +78,7 @@ public class CoreUtils {
 
     public static String receiveWithLength(Object sync, TConnection tConnection) throws Exception {
         int bufferSize = Integer.parseInt(receive(sync, tConnection, 20));
-        return receive(sync, tConnection, bufferSize);
+        return receive(sync, tConnection, bufferSize + 512);
     }
 
 }

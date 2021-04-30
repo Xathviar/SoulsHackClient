@@ -68,32 +68,35 @@ public class GameScreen implements Screen, InputProcessor, Runnable {
         }
     }
 
-    public void create() {
-        stage = new Stage(new ScreenViewport());
-        batch = new SpriteBatch();
-        Gdx.input.setInputProcessor(stage);
-        manager = new AssetManager(new AssetResolver(), true);
-        manager.setLoader(TiledMap.class, new TmxMapLoader());
-        manager.load("tempmap.tmx", TiledMap.class);
-        manager.finishLoading();
+    public boolean create() {
+        try {
+            stage = new Stage(new ScreenViewport());
+            batch = new SpriteBatch();
+            manager = new AssetManager(new AssetResolver(), true);
+            manager.setLoader(TiledMap.class, new TmxMapLoader());
+            manager.load("tempmap.tmx", TiledMap.class);
+            manager.finishLoading();
 
-        map = manager.get("tempmap.tmx", TiledMap.class);
-        MapProperties properties = map.getProperties();
-        tileWidth = properties.get("tilewidth", Integer.class);
-        tileHeight = properties.get("tileheight", Integer.class);
-        mapWidthInTiles = properties.get("width", Integer.class);
-        mapHeightInTiles = properties.get("height", Integer.class);
-        mapWidthInPixels = mapWidthInTiles * tileWidth;
-        mapHeightInPixels = mapHeightInTiles * tileHeight;
-        camera = new OrthographicCamera(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
-        camera.position.x = mapWidthInPixels * .5f;
-        camera.position.y = mapHeightInPixels * .35f;
-//        camera.position.x = 0;
-//        camera.position.y = 0;
-        renderer = new OrthogonalTiledMapRenderer(map);
-        MapLayers mapLayer = map.getLayers();
-        floor = (TiledMapTileLayer) mapLayer.get("Floor");
-        wall = (TiledMapTileLayer) mapLayer.get("Walls");
+            map = manager.get("tempmap.tmx", TiledMap.class);
+            MapProperties properties = map.getProperties();
+            tileWidth = properties.get("tilewidth", Integer.class);
+            tileHeight = properties.get("tileheight", Integer.class);
+            mapWidthInTiles = properties.get("width", Integer.class);
+            mapHeightInTiles = properties.get("height", Integer.class);
+            mapWidthInPixels = mapWidthInTiles * tileWidth;
+            mapHeightInPixels = mapHeightInTiles * tileHeight;
+            camera = new OrthographicCamera(Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
+            camera.position.x = mapWidthInPixels * .5f;
+            camera.position.y = mapHeightInPixels * .35f;
+            camera.zoom = 2f;
+            renderer = new OrthogonalTiledMapRenderer(map);
+            MapLayers mapLayer = map.getLayers();
+            floor = (TiledMapTileLayer) mapLayer.get("Floor");
+            wall = (TiledMapTileLayer) mapLayer.get("Walls");
+        } catch (Exception _e) {
+            return false;
+        }
+        return true;
     }
 
     public GameScreen() {
@@ -107,8 +110,9 @@ public class GameScreen implements Screen, InputProcessor, Runnable {
 
     @Override
     public void render(float delta) {
-        Gdx.gl.glClearColor(1f, 1f, 1f, 1);
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+        Gdx.gl.glClearColor(1f, 1f, 0f, 1);
+//GL20.GL_ALPHA |
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
         if (camera == null && !doCreate) {
             return;
         }
@@ -132,7 +136,6 @@ public class GameScreen implements Screen, InputProcessor, Runnable {
             stage.getViewport().update(width, height, false);
             batch.getProjectionMatrix().setToOrtho2D(0, 0, width, height);
         }
-
     }
 
     @Override
@@ -189,7 +192,17 @@ public class GameScreen implements Screen, InputProcessor, Runnable {
             try {
                 String s = CoreUtils.receiveWithLength(this, tConnection);
                 ClientMessageHandler messageHandler = ClientMessageHandler.valueOf(s.toUpperCase(Locale.ROOT));
-                messageHandler.handleMessage(this);
+                final GameScreen _temp = this;
+                Thread thread = new Thread(() -> {
+                    try {
+                        messageHandler.handleMessage(_temp);
+                    } catch (Exception e) {
+                        log.warn(e.getMessage(), e);
+                    }
+                });
+                thread.start();
+                thread.join(5000);
+                log.info("Thread finished!");
             } catch (Exception e) {
                 e.printStackTrace();
             }

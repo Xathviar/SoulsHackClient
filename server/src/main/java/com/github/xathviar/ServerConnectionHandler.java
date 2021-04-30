@@ -76,4 +76,13 @@ public class ServerConnectionHandler extends Thread implements Runnable {
         started = false;
         tConnection.close();
     }
+
+    public void pingPong() {
+        try {
+            CoreUtils.sendWithLength(tConnection, "ping");
+        } catch (Exception e) {
+            log.info(e.getMessage(), e);
+        }
+    }
+
 }

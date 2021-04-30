@@ -50,6 +50,8 @@ public class ServerDaemon extends AbstractScheduledService implements TConnectio
         //TODO Watch out for the nano Seconds!
         engine.update(currentUpdateTime - lastUpdatetime);
         lastUpdatetime = currentUpdateTime;
+        //TODO maybe add Ping Pong at a later time again
+//        serverConnectionHandlers.forEach(ServerConnectionHandler::pingPong);
     }
 
 
