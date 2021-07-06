@@ -7,7 +7,6 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="EntitySystem" />
         <module name="core" />
         <module name="server" />
         <module name="desktop" />
@@ -15,6 +14,7 @@
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
+      <module name="EntitySystem" target="8" />
       <module name="untitled" target="13" />
     </bytecodeTargetLevel>
   </component>

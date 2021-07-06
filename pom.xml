@@ -13,7 +13,6 @@
         <module>desktop</module>
         <module>server</module>
         <module>Utils</module>
-        <module>EntitySystem</module>
     </modules>
 
     <properties>
@@ -131,6 +130,11 @@
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-simple</artifactId>
             <version>1.7.5</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>29.0-jre</version>
         </dependency>
     </dependencies>
 

@@ -1,6 +1,5 @@
 package com.github.xathviar.Screen;
 
-import com.badlogic.ashley.core.Entity;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
@@ -23,27 +22,24 @@ import com.dongbat.jbump.*;
 import com.dongbat.jbump.World;
 import com.github.xathviar.*;
 import com.github.xathviar.SoulsHackCore.WorldGenerator;
+import com.google.common.eventbus.EventBus;
+import com.google.common.eventbus.Subscribe;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.openmuc.jositransport.ClientTSap;
-import org.openmuc.jositransport.TConnection;
+import org.apache.commons.io.IOUtils;
 
-import java.net.InetAddress;
+import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 
 @Slf4j
 @Data
-public class GameScreen implements Screen, InputProcessor, Runnable, CollisionFilter {
+public class GameScreen implements Screen, InputProcessor, CollisionFilter {
     private WorldGenerator generator;
     private SoulsHackMainClass mainClass;
     private com.dongbat.jbump.World<String> world;
     private String uuid;
-    private ClientTSap clientTSap;
-    private TConnection tConnection;
-    private Thread receiveConnection;
     private TiledMap map;
     private AssetManager manager;
     private int tileWidth, tileHeight,
@@ -63,22 +59,15 @@ public class GameScreen implements Screen, InputProcessor, Runnable, CollisionFi
     private final List<Vector2> hurtBoxes = new ArrayList<>();
 
 
+
     public GameScreen(SoulsHackMainClass mainClass, HashMap<String, String> parameters) {
         this.mainClass = mainClass;
-        this.uuid = SessionSingleton.getInstance().createClientConnectionActor(parameters.get("Playername"));
-        clientTSap = new ClientTSap();
         font = mainClass.getFont();
         font2 = mainClass.getFont();
+        EventBusSingleton.eventbus.register(this);
+        EventBusSingleton.eventbus.post(StageEnum.CONNECTED);
         try {
-            receiveConnection = new Thread(this);
-            receiveConnection.setDaemon(true);
-            receiveConnection.setName("Client Connection Reciever");
-//            Thread.sleep(5000);
-            tConnection = clientTSap.connectTo(InetAddress.getLoopbackAddress(), 5555);
-            CoreUtils.sendWithLength(tConnection, uuid);
-            CoreUtils.sendWithLength(tConnection, "map");
             font.getData().setScale(4);
-            receiveConnection.start();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -109,6 +98,8 @@ public class GameScreen implements Screen, InputProcessor, Runnable, CollisionFi
             renderer = new OrthogonalTiledMapRenderer(map);
             MapLayers mapLayer = map.getLayers();
             floor = (TiledMapTileLayer) mapLayer.get("Floor");
+            this.fillJBumpWorld();
+            this.generatePlayer();
         } catch (Exception _e) {
             return false;
         }
@@ -182,13 +173,11 @@ public class GameScreen implements Screen, InputProcessor, Runnable, CollisionFi
     @Override
     public void dispose() {
         try {
-            CoreUtils.sendWithLength(tConnection, "quit");
             manager.dispose();
             Thread.sleep(5000);
         } catch (Exception e) {
             e.printStackTrace();
         }
-        tConnection.close();
     }
 
     @Override
@@ -231,29 +220,6 @@ public class GameScreen implements Screen, InputProcessor, Runnable, CollisionFi
 //            e.printStackTrace();
 //        }
         return false;
-    }
-
-    @Override
-    public void run() {
-        while (doRun) {
-            try {
-                String s = CoreUtils.receiveWithLength(this, tConnection);
-                ClientMessageHandler messageHandler = ClientMessageHandler.valueOf(s.toUpperCase(Locale.ROOT));
-                final GameScreen _temp = this;
-                Thread thread = new Thread(() -> {
-                    try {
-                        messageHandler.handleMessage(_temp);
-                    } catch (Exception e) {
-                        log.warn(e.getMessage(), e);
-                    }
-                });
-                thread.start();
-                thread.join(5000);
-                log.info("Thread finished!");
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
     }
 
     @Override
@@ -308,10 +274,6 @@ public class GameScreen implements Screen, InputProcessor, Runnable, CollisionFi
     }
 
 
-    public TConnection getTConnection() {
-        return tConnection;
-    }
-
     public void fillJBumpWorld() {
         boolean[][] booleanWorld = rotate(generator.createWalkableStage(), generator.createWalkableStage().length);
         this.world = new World<>();
@@ -352,6 +314,8 @@ public class GameScreen implements Screen, InputProcessor, Runnable, CollisionFi
             y = (int) (Math.random() * booleanWorld.length);
         } while (!booleanWorld[x][y]);
         world.add(player, x * 32, y * 32, 32, 32);
+        camera.position.x = x * 32;
+        camera.position.y = y * 32;
     }
 
     @Override
@@ -359,5 +323,17 @@ public class GameScreen implements Screen, InputProcessor, Runnable, CollisionFi
         log.debug((String) item.userData);
         log.debug((String) item1.userData);
         return Response.touch;
+    }
+
+    @Subscribe
+    public void handleMessage(MapSeed seed) throws Exception {
+        WorldGenerator generator = new WorldGenerator(128, 128, seed.getSeed());
+        this.setGenerator(generator);
+        FileWriter writer = new FileWriter("tempmap.tmx");
+        IOUtils.write(generator.generateTiledMap().toString(), writer);
+        writer.flush();
+        IOUtils.closeQuietly(writer);
+        this.setDoCreate(true);
+        EventBusSingleton.eventbus.post(StageEnum.INIT);
     }
 }
