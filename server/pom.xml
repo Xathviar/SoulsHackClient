@@ -30,9 +30,25 @@
             <version>1.0-SNAPSHOT</version>
         </dependency>
         <dependency>
-            <groupId>com.github.Xathviar.SoulsHackCore</groupId>
-            <artifactId>MapGen</artifactId>
-            <version>v3.0</version>
+            <groupId>com.github.Xathviar</groupId>
+            <artifactId>SoulsHackMapGenerator</artifactId>
+            <version>v5.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.xathviar</groupId>
+            <artifactId>EntitySystem</artifactId>
+            <version>1.0-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.github.implicit-invocation</groupId>
+            <artifactId>jbump</artifactId>
+            <version>17737e7</version>
+        </dependency>
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>2.6</version>
         </dependency>
     </dependencies>
 

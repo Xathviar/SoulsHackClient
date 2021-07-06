@@ -1,15 +1,10 @@
 package com.github.xathviar;
 
 import com.badlogic.ashley.core.Entity;
-import com.github.xathviar.EntitySystem.Components.CharacterComponent;
-import com.github.xathviar.EntitySystem.Components.PositionComponent;
-import com.github.xathviar.EntitySystem.Components.VelocityComponent;
+import com.github.xathviar.EntitySystem.Components.*;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.openmuc.jositransport.TConnection;
-
-import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 
 @Slf4j
 @Data

@@ -1,5 +1,6 @@
 package com.github.xathviar.Screen;
 
+import com.badlogic.ashley.core.Entity;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
@@ -8,29 +9,37 @@ import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.maps.MapLayers;
 import com.badlogic.gdx.maps.MapProperties;
 import com.badlogic.gdx.maps.tiled.TiledMap;
 import com.badlogic.gdx.maps.tiled.TiledMapTileLayer;
 import com.badlogic.gdx.maps.tiled.TmxMapLoader;
+import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
+import com.dongbat.jbump.*;
+import com.dongbat.jbump.World;
 import com.github.xathviar.*;
+import com.github.xathviar.SoulsHackCore.WorldGenerator;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.openmuc.jositransport.ClientTSap;
 import org.openmuc.jositransport.TConnection;
 
 import java.net.InetAddress;
-import java.net.SocketException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 
 @Slf4j
 @Data
-public class GameScreen implements Screen, InputProcessor, Runnable {
+public class GameScreen implements Screen, InputProcessor, Runnable, CollisionFilter {
+    private WorldGenerator generator;
     private SoulsHackMainClass mainClass;
+    private com.dongbat.jbump.World<String> world;
     private String uuid;
     private ClientTSap clientTSap;
     private TConnection tConnection;
@@ -45,15 +54,21 @@ public class GameScreen implements Screen, InputProcessor, Runnable {
     private Stage stage;
     private SpriteBatch batch;
     private boolean doCreate = false;
-    private TiledMapTileLayer wall;
+    private boolean createFinished = false;
     private TiledMapTileLayer floor;
     private boolean doRun = true;
+    private Item<String> player;
+    private BitmapFont font;
+    private BitmapFont font2;
+    private final List<Vector2> hurtBoxes = new ArrayList<>();
 
 
     public GameScreen(SoulsHackMainClass mainClass, HashMap<String, String> parameters) {
         this.mainClass = mainClass;
         this.uuid = SessionSingleton.getInstance().createClientConnectionActor(parameters.get("Playername"));
         clientTSap = new ClientTSap();
+        font = mainClass.getFont();
+        font2 = mainClass.getFont();
         try {
             receiveConnection = new Thread(this);
             receiveConnection.setDaemon(true);
@@ -62,6 +77,7 @@ public class GameScreen implements Screen, InputProcessor, Runnable {
             tConnection = clientTSap.connectTo(InetAddress.getLoopbackAddress(), 5555);
             CoreUtils.sendWithLength(tConnection, uuid);
             CoreUtils.sendWithLength(tConnection, "map");
+            font.getData().setScale(4);
             receiveConnection.start();
         } catch (Exception e) {
             e.printStackTrace();
@@ -73,10 +89,11 @@ public class GameScreen implements Screen, InputProcessor, Runnable {
             stage = new Stage(new ScreenViewport());
             batch = new SpriteBatch();
             manager = new AssetManager(new AssetResolver(), true);
+            TmxMapLoader.Parameters parameters = new TmxMapLoader.Parameters();
+            parameters.flipY = true;
             manager.setLoader(TiledMap.class, new TmxMapLoader());
-            manager.load("tempmap.tmx", TiledMap.class);
+            manager.load("tempmap.tmx", TiledMap.class, parameters);
             manager.finishLoading();
-
             map = manager.get("tempmap.tmx", TiledMap.class);
             MapProperties properties = map.getProperties();
             tileWidth = properties.get("tilewidth", Integer.class);
@@ -110,7 +127,6 @@ public class GameScreen implements Screen, InputProcessor, Runnable {
     @Override
     public void render(float delta) {
         Gdx.gl.glClearColor(1f, 1f, 1f, 1);
-//GL20.GL_ALPHA |
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT | GL20.GL_DEPTH_BUFFER_BIT);
         if (camera == null && !doCreate) {
             return;
@@ -118,14 +134,25 @@ public class GameScreen implements Screen, InputProcessor, Runnable {
         if (doCreate) {
             doCreate = false;
             create();
-            return;
         }
-        camera.update();
-        renderer.setView(camera);
-        renderer.getBatch().begin();
-        renderer.renderTileLayer(floor);
-        renderer.renderTileLayer(wall);
-        renderer.getBatch().end();
+        if (stage != null) {
+            camera.update();
+            renderer.setView(camera);
+            renderer.getBatch().begin();
+            renderer.renderTileLayer(floor);
+            font2.setColor(Color.RED);
+            font2.draw(renderer.getBatch(), "@", camera.position.x, camera.position.y + 8);
+            font2.setColor(Color.CORAL);
+            if (log.isDebugEnabled()) {
+                synchronized (hurtBoxes) {
+                    for (Vector2 hurtBox : hurtBoxes) {
+                        font2.draw(renderer.getBatch(), "#", hurtBox.x, hurtBox.y);
+                    }
+                }
+            }
+            font2.setColor(Color.WHITE);
+            renderer.getBatch().end();
+        }
     }
 
     @Override
@@ -167,21 +194,42 @@ public class GameScreen implements Screen, InputProcessor, Runnable {
     @Override
     public boolean keyDown(int keycode) {
         try {
-            if (Input.Keys.Q == keycode) {
-                CoreUtils.sendWithLength(tConnection, "quit");
-                doRun = false;
-                Gdx.app.exit();
-            } else {
-                CoreUtils.sendWithLength(tConnection, "key");
-                CoreUtils.sendWithLength(tConnection, Integer.toString(keycode));
+            Rect playerCoordinates = world.getRect(player);
+            switch (keycode) {
+                case Input.Keys.A:
+                    world.move(player, playerCoordinates.x - 32, playerCoordinates.y, this);
+                    break;
+                case Input.Keys.D:
+                    world.move(player, playerCoordinates.x + 32, playerCoordinates.y, this);
+                    break;
+                case Input.Keys.S:
+                    world.move(player, playerCoordinates.x, playerCoordinates.y - 32, this);
+                    break;
+                case Input.Keys.W:
+                    world.move(player, playerCoordinates.x, playerCoordinates.y + 32, this);
+                    break;
             }
-            return true;
-        } catch (SocketException e) {
-            log.error("Server stopped responding");
-            Gdx.app.exit();
-        } catch (Exception e) {
-            e.printStackTrace();
+            playerCoordinates = world.getRect(player);
+            camera.position.set(playerCoordinates.x, playerCoordinates.y, 0);
+            log.debug(String.format("%f.x/%f.y", playerCoordinates.x / 32, playerCoordinates.y / 32));
+        } catch (NullPointerException ignored) {
         }
+//        try {
+//            if (Input.Keys.Q == keycode) {
+//                CoreUtils.sendWithLength(tConnection, "quit");
+//                doRun = false;
+//                Gdx.app.exit();
+//            } else {
+//                CoreUtils.sendWithLength(tConnection, "keydown");
+//                CoreUtils.sendWithLength(tConnection, Integer.toString(keycode));
+//            }
+//            return true;
+//        } catch (SocketException e) {
+//            log.error("Server stopped responding");
+//            Gdx.app.exit();
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
         return false;
     }
 
@@ -210,6 +258,22 @@ public class GameScreen implements Screen, InputProcessor, Runnable {
 
     @Override
     public boolean keyUp(int keycode) {
+//        try {
+//            if (Input.Keys.Q == keycode) {
+//                CoreUtils.sendWithLength(tConnection, "quit");
+//                doRun = false;
+//                Gdx.app.exit();
+//            } else {
+//                CoreUtils.sendWithLength(tConnection, "keyup");
+//                CoreUtils.sendWithLength(tConnection, Integer.toString(keycode));
+//            }
+//            return true;
+//        } catch (SocketException e) {
+//            log.error("Server stopped responding");
+//            Gdx.app.exit();
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
         return false;
     }
 
@@ -246,5 +310,54 @@ public class GameScreen implements Screen, InputProcessor, Runnable {
 
     public TConnection getTConnection() {
         return tConnection;
+    }
+
+    public void fillJBumpWorld() {
+        boolean[][] booleanWorld = rotate(generator.createWalkableStage(), generator.createWalkableStage().length);
+        this.world = new World<>();
+        synchronized (hurtBoxes) {
+            for (int x = 0; x < booleanWorld.length; x++) {
+                for (int y = 0; y < booleanWorld[x].length; y++) {
+                    System.out.printf("%3s", booleanWorld[x][y] ? "." : "#");
+                    if (!booleanWorld[x][y]) {
+                        world.add(new Item<String>(String.format("%dx/%dy", x, y)), x * 32, y * 32 + 32, 32, 32);
+                        hurtBoxes.add(new Vector2(x * 32, y * 32 + 32));
+                    }
+                }
+                System.out.println();
+            }
+        }
+    }
+
+    public static boolean[][] rotate(boolean[][] a, int n) {
+        for (int i = 0; i < n - 1; i++) {
+            for (int j = i; j < n - 1 - i; j++) {
+                boolean temp = a[i][j];
+                a[i][j] = a[n - 1 - j][i];
+                a[n - 1 - j][i] = a[n - 1 - i][n - 1 - j];
+                a[n - 1 - i][n - 1 - j] = a[j][n - 1 - i];
+                a[j][n - 1 - i] = temp;
+            }
+        }
+        return a;
+    }
+
+
+    public void generatePlayer() {
+        player = new Item<>("@");
+        boolean[][] booleanWorld = generator.createWalkableStage();
+        int x, y;
+        do {
+            x = (int) (Math.random() * booleanWorld.length);
+            y = (int) (Math.random() * booleanWorld.length);
+        } while (!booleanWorld[x][y]);
+        world.add(player, x * 32, y * 32, 32, 32);
+    }
+
+    @Override
+    public Response filter(Item item, Item item1) {
+        log.debug((String) item.userData);
+        log.debug((String) item1.userData);
+        return Response.touch;
     }
 }

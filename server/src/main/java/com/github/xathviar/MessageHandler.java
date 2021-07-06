@@ -4,19 +4,26 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public enum MessageHandler {
-    KEY {
+    KEYDOWN {
         @Override
         public void handleMessage(ServerConnectionHandler source) throws Exception {
             String key = CoreUtils.receiveWithLength(this, source.gettConnection());
-            log.info("Received Key=" + key);
+            log.info("Received KeyDown = " + key);
         }
     },
-    MAP {
+    KEYUP {
         @Override
         public void handleMessage(ServerConnectionHandler source) throws Exception {
-            String message = MapHelper.getWorldFromSeed(MapSingleton.getInstance().getSeed());
+            String key = CoreUtils.receiveWithLength(this, source.gettConnection());
+            log.info("Received KeyUp = " + key);
+        }
+    }
+    ,MAP {
+        @Override
+        public void handleMessage(ServerConnectionHandler source) throws Exception {
+//            String message = MapHelper.getWorldFromSeed(MapSingleton.getInstance().getSeed());
             CoreUtils.sendWithLength(source.gettConnection(), "map");
-            CoreUtils.sendWithLength(source.gettConnection(), message);
+            CoreUtils.sendWithLength(source.gettConnection(), MapSingleton.getInstance().getSeed());
             log.info("Sending Map with Seed (" + MapSingleton.getInstance().getSeed() + ")");
         }
     },

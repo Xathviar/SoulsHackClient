@@ -9,10 +9,11 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.github.xathviar.Screen.*;
+import lombok.Data;
 
 import java.io.IOException;
 import java.util.HashMap;
-
+@Data
 public class SoulsHackMainClass extends Game implements ApplicationListener {
     private TitleScreen titleScreen;
     private OptionsScreen optionsScreen;
@@ -20,6 +21,7 @@ public class SoulsHackMainClass extends Game implements ApplicationListener {
     private SelectCharacterScreen selectCharacterScreen;
     SpriteBatch batch;
     private BitmapFont font;
+    private BitmapFont font2;
     private static GlyphLayout glyphLayout = new GlyphLayout();
     private float fontHeight;
     private Preferences prefs;
@@ -30,10 +32,21 @@ public class SoulsHackMainClass extends Game implements ApplicationListener {
         batch = new SpriteBatch();
         try {
             font = GdfBitmapFont.create((x) -> Gdx.files.internal(x), "medium.gdfa.gz");
+            font2 = new BitmapFont(Gdx.files.internal("ami32.fnt"));
         } catch (IOException e) {
             e.printStackTrace();
         }
         initPreferences();
+        initFonts(font);
+        if (!isFullScreen()) {
+            Gdx.graphics.setWindowedMode(getPrefWidth(), getPrefHeight());
+        } else {
+            Gdx.graphics.setFullscreenMode(Gdx.graphics.getDisplayMode());
+        }
+        setTitleScreen();
+    }
+
+    private void initFonts(BitmapFont font) {
         if (getPrefScaleFactor() > 0) {
             font.getData().setScale(getPrefScaleFactor());
         } else {
@@ -45,12 +58,6 @@ public class SoulsHackMainClass extends Game implements ApplicationListener {
                 font.getData().setScale((float) Math.round(scaleFactor));
             }
         }
-        if (!isFullScreen()) {
-            Gdx.graphics.setWindowedMode(getPrefWidth(), getPrefHeight());
-        } else {
-            Gdx.graphics.setFullscreenMode(Gdx.graphics.getDisplayMode());
-        }
-        setTitleScreen();
     }
 
     private boolean isFullScreen() {
@@ -186,5 +193,7 @@ public class SoulsHackMainClass extends Game implements ApplicationListener {
     public int getPrefScaleFactor() {
         return prefs.getInteger("FontScaling");
     }
+
+
 
 }
